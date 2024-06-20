@@ -141,6 +141,9 @@ namespace CASCLib
 
             var rootInfosLocale = rootInfos.Where(re => (re.LocaleFlags & Locale) != LocaleFlags.None);
 
+            if (!rootInfosLocale.Any())
+                rootInfosLocale = rootInfos;
+
             if (rootInfosLocale.Count() > 1)
             {
                 IEnumerable<RootEntry> rootInfosLocaleOverride = ContentFlagsFilter.Filter(rootInfosLocale, OverrideArchive, PreferHighResTextures);
