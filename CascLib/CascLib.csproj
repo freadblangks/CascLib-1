@@ -13,11 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-<<<<<<< HEAD
-    <PackageReference Include="MimeKitLite" Version="4.7.1" />
-=======
     <PackageReference Include="MimeKitLite" Version="4.8.0" />
->>>>>>> upstream/master
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
   </ItemGroup>
 
