@@ -450,7 +450,7 @@ namespace CASCLib
                 {
                     var hosts = GetCdnsVariable("Hosts").Split(' ');
 
-                    if (cdnHostIndex >= hosts.Length)
+                    if ((cdnHostIndex + 1) >= hosts.Length)
                         cdnHostIndex = 0;
 
                     return hosts[cdnHostIndex++];
