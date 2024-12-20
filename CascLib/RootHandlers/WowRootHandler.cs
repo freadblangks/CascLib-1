@@ -138,7 +138,6 @@ namespace CASCLib
 
             int headerSize;
             bool isLegacy;
-            int version = 1;
 
             if (magic == TSFMMagic)
             {
@@ -150,19 +149,19 @@ namespace CASCLib
                 int field04 = stream.ReadInt32();
                 int field08 = stream.ReadInt32();
 
-                version = field08;
+                int version = field08;
                 headerSize = field04;
 
-                if (version is 1 or 2)
-                {
-                    numFilesTotal = stream.ReadInt32();
-                    numFilesWithNameHash = stream.ReadInt32();
-                }
-                else
+                if (version != 1)
                 {
                     numFilesTotal = field04;
                     numFilesWithNameHash = field08;
                     headerSize = 12;
+                }
+                else
+                {
+                    numFilesTotal = stream.ReadInt32();
+                    numFilesWithNameHash = stream.ReadInt32();
                 }
             }
             else
@@ -182,32 +181,18 @@ namespace CASCLib
 
             while (stream.BaseStream.Position < stream.BaseStream.Length)
             {
-                int count = 0;
-                ContentFlags contentFlags = 0;
-                LocaleFlags localeFlags = 0;
-
-                if (version == 1)
-                {
-                    count = stream.ReadInt32();
-                    contentFlags = (ContentFlags)stream.ReadUInt32();
-                    localeFlags = (LocaleFlags)stream.ReadUInt32();
-                }
-                else if (version == 2)
-                {
-                    count = stream.ReadInt32();
-                    localeFlags = (LocaleFlags)stream.ReadUInt32();
-                    uint unk0 = stream.ReadUInt32();
-                    contentFlags = (ContentFlags)stream.ReadUInt32();
-                    byte unk1 = stream.ReadByte();
-                }
+                int count = stream.ReadInt32();
 
                 numFilesRead += count;
+
+                ContentFlags contentFlags = (ContentFlags)stream.ReadUInt32();
+                LocaleFlags localeFlags = (LocaleFlags)stream.ReadUInt32();
 
                 if (localeFlags == LocaleFlags.None)
                     throw new InvalidDataException("block.LocaleFlags == LocaleFlags.None");
 
-                //if (contentFlags != ContentFlags.None && (contentFlags & (ContentFlags.HighResTexture | ContentFlags.Windows | ContentFlags.MacOS | ContentFlags.Alternate | ContentFlags.F00020000 | ContentFlags.F00080000 | ContentFlags.F00100000 | ContentFlags.F00200000 | ContentFlags.F00400000 | ContentFlags.F02000000 | ContentFlags.NotCompressed | ContentFlags.NoNameHash | ContentFlags.F20000000)) == 0)
-                //    throw new InvalidDataException("block.ContentFlags != ContentFlags.None");
+                if (contentFlags != ContentFlags.None && (contentFlags & (ContentFlags.HighResTexture | ContentFlags.Windows | ContentFlags.MacOS | ContentFlags.Alternate | ContentFlags.F00020000 | ContentFlags.F00080000 | ContentFlags.F00100000 | ContentFlags.F00200000 | ContentFlags.F00400000 | ContentFlags.F02000000 | ContentFlags.NotCompressed | ContentFlags.NoNameHash | ContentFlags.F20000000)) == 0)
+                    throw new InvalidDataException("block.ContentFlags != ContentFlags.None");
 
                 RootEntry[] entries = new RootEntry[count];
                 int[] filedataIds = new int[count];
@@ -232,15 +217,12 @@ namespace CASCLib
                     for (var i = 0; i < count; ++i)
                         entries[i].cKey = stream.Read<MD5Hash>();
 
-                    if (version == 1 || version == 2)
+                    if ((contentFlags & ContentFlags.NoNameHash) == 0)
                     {
-                        if ((contentFlags & ContentFlags.NoNameHash) == 0)
-                        {
-                            nameHashes = new ulong[count];
+                        nameHashes = new ulong[count];
 
-                            for (var i = 0; i < count; ++i)
-                                nameHashes[i] = stream.ReadUInt64();
-                        }
+                        for (var i = 0; i < count; ++i)
+                            nameHashes[i] = stream.ReadUInt64();
                     }
                 }
                 else
@@ -289,7 +271,7 @@ namespace CASCLib
                     }
 
                     FileDataStore.Add(fileDataId, hash);
-                    FileDataStoreReverse[hash] = fileDataId;
+                    FileDataStoreReverse.Add(hash, fileDataId);
 
                     if (nameHashes != null)
                     {
@@ -344,6 +326,9 @@ namespace CASCLib
                 yield break;
 
             var rootInfosLocale = rootInfos.Where(re => (re.LocaleFlags & Locale) != LocaleFlags.None);
+
+            if (!rootInfosLocale.Any())
+                rootInfosLocale = rootInfos;
 
             if (rootInfosLocale.Count() > 1)
             {
