@@ -135,6 +135,7 @@ namespace CASCLib
         public static bool UseWowTVFS { get; set; } = false;
         public static bool UseOnlineFallbackForMissingFiles { get; set; } = true;
         public static LoadFlags LoadFlags { get; set; } = LoadFlags.FileIndex;
+        public static string OverrideCDNHost { get; set; }
 
         private CASCConfig() { }
 
@@ -442,11 +443,14 @@ namespace CASCLib
         {
             get
             {
+                if(OverrideCDNHost != null)
+                    return OverrideCDNHost;
+
                 if (OnlineMode)
                 {
                     var hosts = GetCdnsVariable("Hosts").Split(' ');
 
-                    if (cdnHostIndex >= hosts.Length)
+                    if ((cdnHostIndex + 1) >= hosts.Length)
                         cdnHostIndex = 0;
 
                     return hosts[cdnHostIndex++];

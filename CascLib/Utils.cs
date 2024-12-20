@@ -18,7 +18,14 @@ namespace CASCLib
 
         public static string MakeCDNUrl(string cdnHost, string cdnPath)
         {
-            return $"http://{cdnHost}/{cdnPath}";
+            if(cdnHost.StartsWith("http://") || cdnHost.StartsWith("https://"))
+            {
+                return $"{cdnHost}/{cdnPath}";
+            }
+            else
+            {
+                return $"http://{cdnHost}/{cdnPath}";
+            }
         }
 
         private static HttpWebResponse HttpWebResponse(string url, string method = "GET", int? from = null, int? to = null, int numRetries = 0)
