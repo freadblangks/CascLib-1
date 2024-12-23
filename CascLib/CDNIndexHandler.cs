@@ -33,6 +33,17 @@ namespace CASCLib
         {
             var handler = new CDNIndexHandler(config, worker);
 
+            if (!config.OnlineMode && !string.IsNullOrEmpty(config.ArchiveGroup))
+            {
+                string groupArchivePath = Path.Combine(config.BasePath, CASCGame.GetDataFolder(config.GameType), "indices", config.ArchiveGroup + ".index");
+                if (File.Exists(groupArchivePath))
+                {
+                    worker?.ReportProgress(0, "Loading \"CDN group index\"...");
+                    handler.OpenIndexFile(config.ArchiveGroup, 0);
+                    return handler;
+                }
+            }
+
             worker?.ReportProgress(0, "Loading \"CDN indexes\"...");
 
             for (int i = 0; i < config.Archives.Count; i++)
@@ -78,8 +89,10 @@ namespace CASCLib
 
                 byte offsetBytes = br.ReadByte();
 
-                if (offsetBytes != 4)
+                if (offsetBytes != 4 && offsetBytes != 6)
                     throw new InvalidDataException("ParseIndex -> offsetBytes");
+
+                bool isGroupArchive = offsetBytes == 6;
 
                 byte sizeBytes = br.ReadByte();
 
@@ -107,12 +120,27 @@ namespace CASCLib
                 {
                     MD5Hash key = br.Read<MD5Hash>();
 
-                    IndexEntry entry = new IndexEntry
+                    IndexEntry entry;
+
+                    if (!isGroupArchive)
                     {
-                        Index = dataIndex,
-                        Size = br.ReadInt32BE(),
-                        Offset = br.ReadInt32BE()
-                    };
+                        entry = new IndexEntry
+                        {
+                            Index = dataIndex,
+                            Size = br.ReadInt32BE(),
+                            Offset = br.ReadInt32BE()
+                        };
+                    }
+                    else
+                    {
+                        entry = new IndexEntry
+                        {
+                            Size = br.ReadInt32BE(),
+                            Index = br.ReadInt16BE(),
+                            Offset = br.ReadInt32BE()
+                        };
+                    }
+
                     CDNIndexData.Add(key, entry);
 
                     // each chunk is 4096 bytes, and zero padding at the end
