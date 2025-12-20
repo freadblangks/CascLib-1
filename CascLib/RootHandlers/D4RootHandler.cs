@@ -506,12 +506,16 @@ namespace CASCLib
         Unknown_173 = 173, // .crt
         Unknown_174 = 174, // .crp
         VisualRemap = 175,
-        MAX_SNO_GROUPS = 176,
+        PowerModifier = 176,
+        UIDesignerNotification = 177,
+        HoudiniDigitalAsset = 178,
+        HoudiniDigitalAssetPreset = 179,
+        MAX_SNO_GROUPS = 180,
     }
 
     public class CoreTOCParserD4
     {
-        private const int MAX_SNO_GROUPS = 169;
+        private const int MAX_SNO_GROUPS = 180;
 
         public unsafe struct TOCHeader
         {
@@ -707,6 +711,10 @@ namespace CASCLib
             [(SNOGroupD4)173] = ".crt",
             [(SNOGroupD4)174] = ".crp",
             [(SNOGroupD4)175] = ".vrm",
+            [(SNOGroupD4)176] = ".pmd",
+            [(SNOGroupD4)177] = ".udn",
+            [(SNOGroupD4)178] = ".hds",
+            [(SNOGroupD4)179] = ".hdp",
         };
 
         public unsafe CoreTOCParserD4(Stream stream)
